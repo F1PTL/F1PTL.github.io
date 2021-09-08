@@ -1,0 +1,121 @@
+﻿rpi-clone
+=========
+
+La version 2 est une réécriture complète avec une capacité améliorée par rapport à l'original. 
+Voir les exemples ci-dessous.
+rpi-clone est un script shell permettant de cloner un disque source démarré par Raspberry Pi 
+en cours d'exécution (carte SD ou disque USB) sur un disque de destination pouvant être initialisé. 
+Les disques de destination sont des cartes SD insérées dans le logement de carte SD ou un lecteur de carte USB, 
+des disques flash USB ou des disques durs USB.
+rpi-clone peut fonctionner sur des périphériques démarrés sur une carte SD autres qu'un Raspberry Pi, 
+car lors de l'initialisation d'un disque, il est possible de capturer une première partition / boot et la 
+configuration du chargeur de démarrage. Mais cela dépendra de la façon dont le chargement de démarrage est 
+géré sur chaque périphérique.
+
+
+Installation et configuration
+=============================
+rpi-clone est sur github on peut le téléchargé en clonant le référentiel. 
+C'est un script autonome et l'installation est une simple copie dans un répertoire bin. 
+Lorsqu'il est exécuté, il vérifie ses dépendances de programmes et propose d'installer les packages nécessaires. 
+Mais actuellement, rpi-clone ne sait installer que les paquets Debian avec apt-get.
+
+
+Sur un Raspberry Pi:
+--------------------
+	$ sudo apt-get update && sudo apt-get upgrade
+
+	$ echo "dtoverlay=pi3-disable-bt" | sudo tee -a /boot/config.txt
+	reponse : dtoverlay=pi3-disable-bt
+
+ 	$ echo program_usb_boot_mode=1 | sudo tee -a /boot/config.txt
+	réponse : program_usb_boot_mode=1
+ 
+	$ sudo reboot
+
+	$ rpi-rw
+	$ git clone https://github.com/billw2/rpi-clone.git 
+	$ cd rpi-clone
+	$ sudo cp rpi-clone rpi-clone-setup /usr/local/sbin
+
+
+
+
+Définition des disques du RaspBerry PI :
+----------------------------------------
+	$ rpi-rw
+	$ sudo fdisk -l
+
+	A la fin de la liste le disque se nomme : /dev/sda ou un autre disque
+
+	Disk /dev/sda: 28.7 GiB, 30752000000 bytes, 60062500 sectors
+	Units: sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disklabel type: dos
+	Disk identifier: 0x00000000
+	Device     Boot Start      End  Sectors  Size Id Type
+	/dev/sda1        8192 60050969 60042778 28.6G  c W95 FAT32 (LBA)
+
+
+Lancement du clonage :
+----------------------
+	
+	$ sudo rpi-clone -l sda -e sda
+
+
+
+	Booted disk: mmcblk0 15.9GB                Destination disk: sda 30.8GB
+	---------------------------------------------------------------------------
+	Part      Size    FS     Label           Part   Size    FS     Label
+	1 /boot   66.0MB  fat16  --              1      30.7GB  fat32  --
+	2 root    15.9GB  ext4   pi-star
+	---------------------------------------------------------------------------
+	== Initialize: IMAGE mmcblk0 partition table to sda - FS types mismatch ==
+	1 /boot               (23.6MB used)  : IMAGE     to sda1  FSCK
+	2 root                (1.7GB used)   : RESIZE(30.7GB) MKFS SYNC to sda2
+	---------------------------------------------------------------------------
+	Run setup script       : no
+	Verbose mode           : no
+	-----------------------:
+	** WARNING **          : All destination disk sda data will be overwritten!
+						   :   The partition structure will be imaged from mmcblk0.
+	-----------------------:
+
+	Initialize and clone to the destination disk sda?  (yes/no): yes
+	Optional destination  ext type file system label (16 chars max):
+
+	Initializing
+	  Imaging past the start of /boot partition 2.
+	  => dd if=/dev/mmcblk0 of=/dev/sda bs=1M count=71 ...
+	  Resizing last partition to end of disk ...
+		Resize success.
+	  Changing destination Disk ID ...
+	  Delaying so partprobe can update /dev entries ...
+	  => fsck -p /dev/sda1 ...
+	  => mkfs -t ext4  /dev/sda2 ...
+
+	Syncing file systems (can take a long time)
+	Syncing mounted partitions:
+	  Mounting /dev/sda2 on /mnt/clone
+	  => rsync // /mnt/clone with-root-excludes ...
+	  Mounting /dev/sda1 on /mnt/clone/boot
+	  => rsync /boot/ /mnt/clone/boot  ...
+
+	===============================
+	Done with clone to /dev/sda
+	   Start - 11:40:19    End - 11:43:10    Elapsed Time - 2:51
+
+	Cloned partitions are mounted on /mnt/clone for inspection or customizing.
+
+	Hit Enter when ready to unmount the /dev/sda partitions ...
+	
+	Taper Enter
+	
+	  unmounting /mnt/clone/boot
+	  unmounting /mnt/clone
+	===============================
+
+On enleve la carte micro SD et on demarre le RaspBerry PI3
+Boot sur la clef USB
+

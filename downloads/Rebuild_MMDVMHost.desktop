@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Rebuild From Source
+GenericName=Rebuild From Source
+Exec=sh -c "sudo pkill MMDVMHost; cd /home/pi/Applications/; sudo rm -Rf MMDVMHost; sudo git clone https://github.com/g4klx/MMDVMHost.git; cd /home/pi/Applications/MMDVMHost; sudo make clean all; sudo systemctl start mmdvmhost.service; sudo screen -r MMDVMHost"
+Icon=/home/pi/Documents/rebuild.jpeg
+Terminal=true
+Categories=MMDVMHost;
